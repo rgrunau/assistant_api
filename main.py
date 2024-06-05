@@ -1,13 +1,30 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 import os
 from dotenv import find_dotenv, load_dotenv
 from pydantic import BaseModel
 from typing import Literal
 import time
+import logging
 
 load_dotenv()
 app = FastAPI()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+origins = [
+    "http://localhost:3000",  # Allow localhost for development
+    "http://your-production-url.com",  # Allow your production URL
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 openai_client = OpenAI(
     api_key = os.getenv("OPEN_AI_API_KEY"),
@@ -28,9 +45,11 @@ async def read_root():
     else:
         return {"message": "Error: No assistant found. Please create an assistant first."}
 
-@app.get("/assistant/create-thread")
+@app.post("/assistant/create-thread")
 async def create_thread():
+    logging.info("Creating a new thread")
     response = openai_client.beta.threads.create()
+    logging.info(response)
     return {
         "message": "What can I help you with today?",
         "thread_id": response.id
@@ -74,3 +93,8 @@ async def send_message(thread_id: str, request: MessageRequest):
                 if content.type == "text":
                     return {"message": content.text.value}
             return {"message": message.content}
+
+@app.get("/assistant/messages/{thread_id}")
+async def get_messages(thread_id: str):
+    messages = openai_client.beta.threads.messages.list(thread_id=thread_id)
+    return messages.data
