@@ -61,6 +61,7 @@ class MessageRequest(BaseModel):
 
 @app.post("/assistant/messages/{thread_id}")
 async def send_message(thread_id: str, request: MessageRequest):
+    logging.info(f"Sending message to thread {thread_id}")
     message = openai_client.beta.threads.messages.create(
         thread_id=thread_id,
         content=request.message,
@@ -97,4 +98,6 @@ async def send_message(thread_id: str, request: MessageRequest):
 @app.get("/assistant/messages/{thread_id}")
 async def get_messages(thread_id: str):
     messages = openai_client.beta.threads.messages.list(thread_id=thread_id)
-    return messages.data
+    #reverse the list
+    messages.data = messages.data[::-1]
+    return messages.data 
