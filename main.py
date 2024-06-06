@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 import os
@@ -33,7 +33,7 @@ openai_client = OpenAI(
 )
 
 
-
+# connected_clients: List[Websocket] = []
 
 @app.get("/")
 async def read_root():
@@ -44,6 +44,22 @@ async def read_root():
         return {"messsage": f"Hello, Bob. I'm your new assistant, {assistant.name}."}
     else:
         return {"message": "Error: No assistant found. Please create an assistant first."}
+
+
+# @app.websocket("/ws/{thread_id}")
+# async def websocket_endpoint(websocket: WebSocket):
+#     await websocket.accept()
+#     connected_clients.append(websocket)
+#     try:
+#         while True:
+#             data = await websocket.receive_text()
+#             thread_messages  = client.beta.threads.list(thread_id)
+#             reversed_thread = thread_messages[::-1]
+#             for client in connected_clients:
+#                 await client.sent_text(reversed_thread)
+#     except WebSocketDisconnect:
+#         connected_clients.remove(websockets)
+
 
 @app.post("/assistant/create-thread")
 async def create_thread():
